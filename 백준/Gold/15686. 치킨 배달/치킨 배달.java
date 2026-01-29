@@ -1,80 +1,91 @@
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Queue;
-
 
 public class Main {
-    static int N,M;
-    static int arr[][];
-    static int min = Integer.MAX_VALUE;
-    static List<int[]> homeq = new LinkedList<>();
-    static List<int[]> chickenq = new LinkedList<>();
-    static boolean visit[];
+    static StringBuilder sb = new StringBuilder();
+    static int[][] arr ;
+    static List<int[]> chicken = new ArrayList<>();
+    static List<int[]> home = new ArrayList<>();
+    static List<int[]> chose = new ArrayList<>();
+    static int minDistance = Integer.MAX_VALUE;
+    static int m;
 
-    static void back(int start, int depth) {
-
-        if (depth == M) {
-            diff();
+    static void backtrack(int idx, int depth) {
+        // 내가 원하는 치킷집 갯수 만큼만 조합
+        if (depth == m) {
+            // 거리 계산하는 함수로 따로
+            distance();
             return;
         }
 
-        for (int i = start; i < chickenq.size(); i++) { //치킨집 여러군대에서 m개를 뽑기 위해
-            if (!visit[i]) {
-                visit[i] = true;
-                back(i+1, depth + 1);
-                visit[i] = false;
-            }
+        // 치킨집 고르는 반복
+        for (int i = idx; i < chicken.size(); i++) {
+            chose.add(chicken.get(i));
+            backtrack(i + 1, depth + 1);
+
+            // a, b 고른 후 b만 삭제해 a는 다시 재선택 가능하게
+            chose.remove(chose.size() - 1);
         }
     }
 
-    static void diff() {
-        int totaltime = 0; // 각 집에 대해 최소 치킨 거리 합 계산
+    static void distance(){
+        int hap = 0;
 
-        // 각 집마다 가장 가까운 치킨집과의 거리 계산
-        for (int i = 0; i < homeq.size(); i++) {
-            int home[] = homeq.get(i);  // 각 집에 대해서
-            int distance = Integer.MAX_VALUE; // 집마다 최소 거리 초기화
+        for (int i = 0; i < home.size(); i++) {
+            // 집 해당 위치 하나를 골라서
+            int[] homeXY = home.get(i);
 
-            // 각 집에 대해 선택된 치킨집과의 거리 계산
-            for (int j = 0; j < chickenq.size(); j++) {
-                if (visit[j]) { // 선택된 치킨집만 계산
-                    int ch[] = chickenq.get(j);  // 치킨집
-                    int sum = Math.abs(home[0] - ch[0]) + Math.abs(home[1] - ch[1]); // 각 집들마다 치킨집과의 거리들 합을 구함
-                    distance = Math.min(distance, sum); // 여러 치킨집 중 가장 가까운 치킨집 찾기
+            // 한 집에서 최소의 거리인 치킨집을 찾기 위해
+            int minDistance = Integer.MAX_VALUE;
+
+            for (int j = 0; j < m; j++) {
+                // 골라진 치킨집들의 거리 계산
+                int[] chickenXY = chose.get(j);
+
+                int chickenTemporary = Math.abs(chickenXY[0] - homeXY[0]) + Math.abs(chickenXY[1]- homeXY[1]);
+                if (minDistance > chickenTemporary) {
+                    minDistance = chickenTemporary;
                 }
             }
-
-            totaltime += distance; // 최소 치킨거리 더하기
+            hap+=minDistance;
+        }
+        if (hap < minDistance) {
+            minDistance = hap;
         }
 
-        min = Math.min(min, totaltime); // 최소 치킨 거리 갱신
     }
+
 
     public static void main(String[] args) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        String s[] = br.readLine().split(" ");
-        N= Integer.parseInt(s[0]);
-        M= Integer.parseInt(s[1]);
-        arr = new int[N][N];
-        
-        for (int i = 0; i < N; i++) {
-            String line[] = br.readLine().split(" ");
-            for (int j = 0; j < N; j++) {
-                arr[i][j] = Integer.parseInt(line[j]);
-                if (arr[i][j]==1){
-                    homeq.add(new int[]{i, j});
+
+        String[] firstInput = br.readLine().split(" ");
+
+        int n = Integer.parseInt(firstInput[0]);
+        m = Integer.parseInt(firstInput[1]);
+
+        arr = new int[n][n];
+
+        for(int i = 0; i < n; i++){
+            String[] input = br.readLine().split(" ");
+            for(int j = 0; j < n; j++){
+                int parseInt = Integer.parseInt(input[j]);
+                arr[i][j] = parseInt;
+                if (parseInt == 2) {
+                    chicken.add(new int[]{i, j});
                 }
-                else if (arr[i][j]==2){
-                    chickenq.add(new int[]{i, j});
+                if (parseInt == 1) {
+                    home.add(new int[]{i, j});
                 }
             }
         }
-        visit= new boolean[chickenq.size()];
-        back(0, 0);
-        System.out.println(min);
 
+        backtrack(0,0);
+
+        sb.append(minDistance);
+        System.out.println(sb.toString());
     }
 }
